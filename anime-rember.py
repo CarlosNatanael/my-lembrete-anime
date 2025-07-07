@@ -1,108 +1,100 @@
-from tkinter import ttk, messagebox
-from plyer import notification
-from datetime import datetime
 import tkinter as tk
-import webbrowser
-import json
+from tkinter import ttk, messagebox
 import os
+import json
+import webbrowser
+from datetime import datetime
+from plyer import notification
 
 class AnimeReminder:
     def __init__(self, root):
         self.root = root
-        self.root.title("Lembrete de Animes (Dark Mode)")
+        self.root.title("Lembrete de Animes")
         self.root.geometry("850x600")
         self.filename = "animes.json"
         
-        # --- Configuração do Estilo Dark Mode ---
+        # --- Carrega o tema Azure (de forma direta e mais segura) ---
         style = ttk.Style(self.root)
-        self.root.tk.call("source", "azure.tcl")
-        style.theme_use("azure-dark")  
-        
-        # Cores
-        BG_COLOR = "#2E2E2E" # Cor de fundo principal
-        FG_COLOR = "#FFFFFF" # Cor do texto (foreground)
-        FIELD_BG_COLOR = "#3E3E3E" # Fundo para campos de entrada e treeview
-        ACCENT_COLOR = "#0078D7" # Cor de destaque para seleção
-
-        style.configure("TFrame", background=BG_COLOR)
-        style.configure("TLabel", background=BG_COLOR, foreground=FG_COLOR, font=("Segoe UI", 10))
-        style.configure("TButton", background="#4A4A4A", foreground=FG_COLOR, font=("Segoe UI", 10), borderwidth=0)
-        style.map("TButton", background=[("active", "#5A5A5A")])
-        
-        style.configure("Treeview", 
-                        background=FIELD_BG_COLOR, 
-                        fieldbackground=FIELD_BG_COLOR, 
-                        foreground=FG_COLOR,
-                        rowheight=25)
-        style.configure("Treeview.Heading", 
-                        background="#3E3E3E", 
-                        foreground=FG_COLOR, 
-                        font=("Segoe UI", 10, "bold"),
-                        borderwidth=0)
-        style.map("Treeview", background=[("selected", ACCENT_COLOR)])
-        style.map("Treeview.Heading", background=[('active', '#555555')])
-
+        try:
+            # Carrega o arquivo de tema dark DIRETAMENTE
+            self.root.tk.call("source", "theme/azure-dark.tcl")
+            style.theme_use("azure-dark")
+        except tk.TclError:
+            messagebox.showerror("Erro de Tema", "Não foi possível encontrar o arquivo 'theme/azure-dark.tcl'. Verifique se o arquivo e a pasta 'theme' estão no lugar correto.")
+            self.root.destroy()
+            return
+    
+        # --- Força a aplicação do tema em todos os cantos ---
+        # As cores são baseadas no arquivo do tema para manter a consistência
+        BG_COLOR = "#333333"  # Cor de fundo do tema
+        FG_COLOR = "#ffffff"  # Cor do texto do tema
+    
         self.root.configure(background=BG_COLOR)
-
-        # --- Frame para os campos de entrada ---
+        style.configure("TFrame", background=BG_COLOR)
+        style.configure("TLabel", background=BG_COLOR, foreground=FG_COLOR)
+        style.configure("TButton", foreground=FG_COLOR)
+        # A cor de fundo do TButton já é bem definida pelo tema, então só ajustamos o texto.
+    
+        # --- Widgets da Interface ---
+        
+        # Frame para os campos de entrada
         frame_entrada = ttk.Frame(self.root, padding="10")
         frame_entrada.pack(fill='x', padx=10, pady=5)
-
-        # --- Labels e Entradas ---
-        ttk.Label(frame_entrada, text="Nome do Anime:").grid(row=0, column=0, padx=5, pady=5, sticky='w')
-        self.entry_nome = ttk.Entry(frame_entrada, width=50, font=("Segoe UI", 10))
-        self.entry_nome.grid(row=0, column=1, padx=5, pady=5, sticky='ew')
-
-        ttk.Label(frame_entrada, text="Data (DD/MM/AAAA):").grid(row=1, column=0, padx=5, pady=5, sticky='w')
-        self.entry_data = ttk.Entry(frame_entrada, font=("Segoe UI", 10))
-        self.entry_data.grid(row=1, column=1, padx=5, pady=5, sticky='ew')
-
-        ttk.Label(frame_entrada, text="Link para Assistir:").grid(row=2, column=0, padx=5, pady=5, sticky='w')
-        self.entry_link = ttk.Entry(frame_entrada, font=("Segoe UI", 10))
-        self.entry_link.grid(row=2, column=1, padx=5, pady=5, sticky='ew')
-
-        ttk.Label(frame_entrada, text="Episódios (Ex: 1/12):").grid(row=3, column=0, padx=5, pady=5, sticky='w')
-        self.entry_eps = ttk.Entry(frame_entrada, font=("Segoe UI", 10))
-        self.entry_eps.grid(row=3, column=1, padx=5, pady=5, sticky='ew')
-        
         frame_entrada.columnconfigure(1, weight=1)
-
-        # --- Frame para os botões ---
+    
+        # Labels e Entradas
+        ttk.Label(frame_entrada, text="Nome do Anime:").grid(row=0, column=0, padx=5, pady=5, sticky='w')
+        self.entry_nome = ttk.Entry(frame_entrada, width=50)
+        self.entry_nome.grid(row=0, column=1, padx=5, pady=5, sticky='ew')
+    
+        ttk.Label(frame_entrada, text="Data (DD/MM/AAAA):").grid(row=1, column=0, padx=5, pady=5, sticky='w')
+        self.entry_data = ttk.Entry(frame_entrada)
+        self.entry_data.grid(row=1, column=1, padx=5, pady=5, sticky='ew')
+    
+        ttk.Label(frame_entrada, text="Link para Assistir:").grid(row=2, column=0, padx=5, pady=5, sticky='w')
+        self.entry_link = ttk.Entry(frame_entrada)
+        self.entry_link.grid(row=2, column=1, padx=5, pady=5, sticky='ew')
+    
+        ttk.Label(frame_entrada, text="Episódios (Ex: 1/12):").grid(row=3, column=0, padx=5, pady=5, sticky='w')
+        self.entry_eps = ttk.Entry(frame_entrada)
+        self.entry_eps.grid(row=3, column=1, padx=5, pady=5, sticky='ew')
+    
+        # Frame para os botões
         frame_botoes = ttk.Frame(self.root, padding="10")
         frame_botoes.pack(fill='x', padx=10)
-
+    
         self.add_button = ttk.Button(frame_botoes, text="Adicionar Anime", command=self.adicionar_anime)
         self.add_button.pack(side='left', padx=5)
-
+    
         self.delete_button = ttk.Button(frame_botoes, text="Deletar Selecionado", command=self.deletar_anime)
         self.delete_button.pack(side='left', padx=5)
-
-        # --- Lista de Animes (Treeview) ---
+    
+        # Lista de Animes (Treeview)
         tree_frame = ttk.Frame(self.root, padding="10")
         tree_frame.pack(fill='both', expand=True, padx=10, pady=5)
-
+    
         self.tree = ttk.Treeview(tree_frame, columns=("Nome", "Data", "Episódios", "Link"), show="headings")
         self.tree.heading("Nome", text="Nome do Anime")
         self.tree.heading("Data", text="Próximo Lançamento")
         self.tree.heading("Episódios", text="Progresso")
         self.tree.heading("Link", text="Link")
-
+        
         self.tree.column("Nome", width=300)
         self.tree.column("Data", width=120, anchor='center')
         self.tree.column("Episódios", width=100, anchor='center')
         self.tree.column("Link", width=300)
-
+    
         scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=scrollbar.set)
         
         self.tree.pack(side='left', fill='both', expand=True)
         scrollbar.pack(side='right', fill='y')
-
-        # --- Eventos ---
+    
+        # Eventos
         self.tree.bind("<Double-1>", self.abrir_link)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-        # --- Carregar dados e iniciar verificador ---
+    
+        # Carregar dados e iniciar verificador
         self.load_animes()
         self.check_for_notifications()
 
@@ -113,7 +105,7 @@ class AnimeReminder:
         eps = self.entry_eps.get()
 
         if not (nome and data and link):
-            messagebox.showwarning("Campo Vazios", "Por favor, preencher pelo menos os campos de Nome, Data e Link.")
+            messagebox.showwarning("Campos Vazios", "Por favor, preencha pelo menos os campos de Nome, Data e Link.")
             return
         
         try:
@@ -122,7 +114,8 @@ class AnimeReminder:
             messagebox.showerror("Data Inválida", "Por favor, insira a data no formato DD/MM/AAAA.")
             return
         
-        self.tree.insert("", "end", values=(nome, data, link, eps))
+        # CORREÇÃO: A ordem dos valores estava trocada aqui
+        self.tree.insert("", "end", values=(nome, data, eps, link))
 
         self.entry_nome.delete(0, 'end')
         self.entry_data.delete(0, 'end')
@@ -145,7 +138,8 @@ class AnimeReminder:
         item_id = self.tree.identify_row(event.y)
         if item_id:
             values = self.tree.item(item_id, 'values')
-            link = values[3]
+            # CORREÇÃO: O link está na posição 3 (quarto valor)
+            link = values[3] 
             if link and (link.startswith("http://") or link.startswith("https://")):
                 webbrowser.open_new_tab(link)
             else:
@@ -192,12 +186,13 @@ class AnimeReminder:
                     notification.notify(
                         title="Lembrete de Anime!",
                         message=f"Hoje tem episódio novo de '{anime_nome}'. Não se esqueça de assistir!",
-                        app_name = "Lembrete de Animes",
+                        app_name="Lembrete de Animes",
                         timeout=20
                     )
                 except Exception as e:
                     print(f"Erro ao enviar a notificação: {e}")
         
+        # Verifica a cada 1 hora
         self.root.after(3600000, self.check_for_notifications)
 
     def on_closing(self):
