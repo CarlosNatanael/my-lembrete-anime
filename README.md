@@ -28,7 +28,7 @@ Para rodar o projeto no seu ambiente de desenvolvimento, siga os passos abaixo:
 
 2. **Clone este repositório:**
    ```bash
-   git clone https://github.com/seu-usuario/my-lembrete-anime.git
+   git clone https://github.com/CarlosNatanael/my-lembrete-anime.git
    cd my-lembrete-anime
    ```
 
